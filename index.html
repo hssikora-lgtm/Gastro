@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+
+<!-- PWA -->
+<link rel="manifest" href="./manifest.json">
+<meta name="theme-color" content="#1a2a6c">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+
+<link rel="icon" href="https://emojicdn.elk.sh/🍴">
+<link rel="apple-touch-icon" href="https://emojicdn.elk.sh/🍴">
+
+<title>Gastro-Tracker</title>
+
+<style>
+:root { --primary:#ff6b6b; --secondary:#4ecdc4; }
+body {
+    margin:0; padding:15px;
+    font-family:Segoe UI, sans-serif;
+    background:linear-gradient(160deg,#1a2a6c,#b21f1f,#fdbb2d);
+    background-attachment:fixed;
+    color:white; min-height:100vh;
+}
+.container {
+    background:rgba(0,0,0,.5);
+    backdrop-filter:blur(15px);
+    padding:20px; border-radius:25px;
+    margin-bottom:20px;
+}
+.tabs { display:flex; gap:8px; overflow-x:auto; margin-bottom:15px; }
+.tab { padding:8px 12px; border-radius:10px; background:rgba(255,255,255,.15); cursor:pointer; }
+.tab.active { background:var(--primary); font-weight:bold; }
+.input-group { display:flex; flex-direction:column; gap:10px; }
+input,button {
+    padding:14px; border-radius:12px; border:none; font-size:16px;
+}
+button { background:var(--secondary); color:white; font-weight:bold; cursor:pointer; }
+.liste { max-height:260px; overflow-y:auto; margin-top:10px; }
+.eintrag {
+    background:rgba(255,255,255,.1);
+    padding:12px; border-radius:15px; margin-bottom:8px;
+    display:flex; justify-content:space-between;
+}
+.zeit { font-size:.75em; opacity:.7; }
+.gesamt-box {
+    margin-top:10px; padding:15px; border-radius:20px;
+    background:rgba(255,255,255,.15);
+    text-align:center; font-size:1.6em; font-weight:bold;
+}
+.jahr-liste { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+.jahr-item { background:rgba(255,255,255,.1); padding:8px; border-radius:10px; }
+.jahr-gesamt {
+    grid-column:1/3; background:var(--primary);
+    padding:12px; border-radius:15px; text-align:center;
+    font-weight:bold;
+}
+.del-btn {
+    background:none; border:1px solid #ff4757; color:#ff4757;
+    border-radius:8px; padding:4px 8px; cursor:pointer;
+}
+.footer { text-align:center; opacity:.5; margin-top:20px; }
+</style>
+</head>
+
+<body>
+
+<div class="container">
+<h2 style="text-align:center">🍴 Gastro-Tracker</h2>
+<div class="tabs" id="monthTabs"></div>
+
+<div class="input-group">
+<input id="betrag" placeholder="Betrag €" inputmode="decimal">
+<input id="ort" placeholder="Ort wird ermittelt …">
+<button onclick="speichern()">Hinzufügen</button>
+</div>
+
+<div class="liste" id="liste"></div>
+<div class="gesamt-box" id="gesamt">0,00 €</div>
+</div>
+
+<div class="container">
+<h3 style="text-align:center">📊 Jahresübersicht</h3>
+<div class="jahr-liste" id="jahr"></div>
+</div>
+
+<div class="footer">by HauniBauni</div>
+
+<script>
+const monate=["Jan","Feb","Mär","Apr","Mai","Jun","Jul","Aug","Sep","Okt","Nov","Dez"];
+let tab=new Date().getMonth();
+let daten=JSON.parse(localStorage.getItem("gastro_v_final")||"[]");
+
+window.onload=()=>{
+tabs(); render(); standort();
+};
+
+function standort(){
+if(!navigator.geolocation) return;
+navigator.geolocation.getCurrentPosition(async pos=>{
+try{
+const r=await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&addressdetails=1&lat=${pos.coords.latitude}&lon=${pos.coords.longitude}`);
+const d=await r.json();
+const a=d.address||{};
+const alles=JSON.stringify(a).toLowerCase();
+
+let stadt=a.city||a.town||a.village||a.municipality||"";
+
+if(alles.includes("wolfsegg")||alles.includes("graben")||alles.includes("kohlgrube")){
+stadt="Wolfsegg";
+}
+
+let name=a.amenity||a.restaurant||a.cafe||a.pub||"";
+document.getElementById("ort").value=name?`${name}, ${stadt}`:stadt;
+}catch{
+document.getElementById("ort").value="Wolfsegg";
+}
+},{enableHighAccuracy:true});
+}
+
+function tabs(){
+const c=document.getElementById("monthTabs"); c.innerHTML="";
+monate.forEach((m,i)=>{
+const s=document.createElement("span");
+s.className="tab"+(i===tab?" active":"");
+s.innerText=m;
+s.onclick=()=>{tab=i; tabs(); render();};
+c.appendChild(s);
+});
+}
+
+function speichern(){
+const b=parseFloat(document.getElementById("betrag").value.replace(",",".")); 
+if(!b) return;
+const o=document.getElementById("ort").value;
+const t=new Date();
+daten.push({
+id:Date.now(),
+betrag:b,
+ort:o,
+monat:tab,
+zeit:t.toLocaleDateString("de-DE")+" "+t.toLocaleTimeString("de-DE",{hour:"2-digit",minute:"2-digit"})
+});
+localStorage.setItem("gastro_v_final",JSON.stringify(daten));
+document.getElementById("betrag").value="";
+render();
+}
+
+function render(){
+const l=document.getElementById("liste"); l.innerHTML="";
+let msum=0, jsum=0;
+
+daten.filter(x=>x.monat===tab).reverse().forEach(e=>{
+msum+=e.betrag;
+l.innerHTML+=`
+<div class="eintrag">
+<div>
+<b>${e.betrag.toFixed(2).replace(".",",")} €</b><br>
+📍 ${e.ort}<div class="zeit">📅 ${e.zeit}</div>
+</div>
+<button class="del-btn" onclick="del(${e.id})">X</button>
+</div>`;
+});
+
+document.getElementById("gesamt").innerText=
+`${monate[tab]}: ${msum.toFixed(2).replace(".",",")} €`;
+
+const j=document.getElementById("jahr"); j.innerHTML="";
+monate.forEach((m,i)=>{
+const s=daten.filter(x=>x.monat===i).reduce((a,b)=>a+b.betrag,0);
+jsum+=s;
+j.innerHTML+=`<div class="jahr-item">${m}<b>${s.toFixed(2).replace(".",",")} €</b></div>`;
+});
+j.innerHTML+=`<div class="jahr-gesamt">GESAMT ${new Date().getFullYear()}: ${jsum.toFixed(2).replace(".",",")} €</div>`;
+}
+
+function del(id){
+if(confirm("Eintrag löschen?")){
+daten=daten.filter(x=>x.id!==id);
+localStorage.setItem("gastro_v_final",JSON.stringify(daten));
+render();
+}
+}
+
+/* Service Worker */
+if("serviceWorker"in navigator){
+navigator.serviceWorker.register("./sw.js");
+}
+</script>
+
+</body>
+</html>
