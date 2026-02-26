@@ -31,7 +31,7 @@
         .liste { max-height: 300px; overflow-y: auto; margin-bottom: 10px; }
         .eintrag { background: rgba(255,255,255,0.1); padding: 12px; border-radius: 15px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; border-left: 5px solid var(--secondary); }
         .info-text { font-size: 0.85em; line-height: 1.4; }
-        .zeit-stempel { font-size: 0.7em; opacity: 0.7; display: block; margin-top: 2px; }
+        .zeit-stempel { font-size: 0.75em; opacity: 0.8; display: block; margin-top: 3px; color: #eee; }
         .gesamt-box { text-align: center; font-size: 1.6em; font-weight: bold; background: rgba(255,255,255,0.15); padding: 15px; border-radius: 20px; border: 1px solid var(--primary); }
         .jahr-liste { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px; }
         .jahr-item { background: rgba(255,255,255,0.05); padding: 8px; border-radius: 10px; display: flex; justify-content: space-between; font-size: 0.85em; }
@@ -46,7 +46,7 @@
     <div class="tabs" id="monthTabs"></div>
     <div class="input-group">
         <input type="text" id="betrag" placeholder="Betrag in €" inputmode="decimal">
-        <input type="text" id="ort" placeholder="Ort...">
+        <input type="text" id="ort" placeholder="Ort wird gesucht...">
         <button id="addBtn" onclick="speichern()">Hinzufügen</button>
     </div>
     <div id="liste" class="liste"></div>
@@ -78,11 +78,25 @@
                 const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${pos.coords.latitude}&lon=${pos.coords.longitude}&addressdetails=1`);
                 const data = await res.json();
                 const a = data.address;
+                
+                // Name des Restaurants oder Cafés finden
                 let name = a.amenity || a.restaurant || a.cafe || a.pub || "";
+                
+                // Ort bestimmen (mit Wolfsegg-Korrektur)
                 let city = a.village || a.town || a.city || "Wolfsegg";
-                if ((city + (a.suburb || "") + (a.road || "")).toLowerCase().match(/wolfsegg|kohlgrube|graben/)) city = "Wolfsegg";
+                
+                // Prüfen auf Kohlgrube oder Graben und zu Wolfsegg korrigieren
+                const ortsCheck = (city + (a.suburb || "") + (a.road || "")).toLowerCase();
+                if (ortsCheck.includes("wolfsegg") || ortsCheck.includes("kohlgrube") || ortsCheck.includes("graben")) {
+                    city = "Wolfsegg";
+                }
+                
                 document.getElementById('ort').value = name ? name : city;
-            } catch (e) {}
+            } catch (e) {
+                document.getElementById('ort').value = "Wolfsegg";
+            }
+        }, () => {
+            document.getElementById('ort').value = "Wolfsegg";
         });
     }
 
@@ -131,7 +145,7 @@
                     <div class="info-text">
                         <b>${a.betrag.toFixed(2).replace('.', ',')} €</b><br>
                         📍 ${a.ort}
-                        <span class="zeit-stempel">📅 ${a.zeit || 'Kein Datum'}</span>
+                        <span class="zeit-stempel">📅 ${a.zeit || ''}</span>
                     </div>
                     <button class="del-btn" onclick="loeschen(${a.id})">X</button>
                 </div>`;
