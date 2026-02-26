@@ -1,0 +1,13 @@
+{
+  "name": "Gastro-Tracker",
+  "short_name": "Gastro-Tracker",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#1a2a6c",
+  "theme_color": "#1a2a6c",
+  "orientation": "portrait",
+  "icons": [
+    { "src": "https://emojicdn.elk.sh/🍴", "sizes": "192x192", "type": "image/png" },
+    { "src": "https://emojicdn.elk.sh/🍴", "sizes": "512x512", "type": "image/png" }
+  ]
+}
