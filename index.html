@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="mobile-web-app-capable" content="yes">
-    <title>Gastro-Tracker Auto-GPS</title>
+    <title>Gastro-Tracker Wolfsegg</title>
     <style>
         :root { --primary: #ff6b6b; --secondary: #4ecdc4; --dark: #2f3542; }
         body { 
@@ -41,10 +41,8 @@
     <div class="tabs" id="monthTabs"></div>
     <div class="input-group">
         <input type="text" id="betrag" placeholder="Betrag in €" inputmode="decimal">
-        
-        <input type="text" id="ort" placeholder="Ort (wird gesucht...)" list="ortVorschlaege">
-        <div id="gpsStatus" class="gps-status">GPS wird geladen...</div>
-        
+        <input type="text" id="ort" placeholder="Ort wird ermittelt..." list="ortVorschlaege">
+        <div id="gpsStatus" class="gps-status">Suche Standort...</div>
         <datalist id="ortVorschlaege"></datalist> 
         <button id="addBtn" onclick="speichern()">Hinzufügen</button>
     </div>
@@ -56,7 +54,6 @@
     <h3>📊 Jahresübersicht</h3>
     <div id="jahrUebersicht" class="jahr-liste"></div>
     <div class="jahr-total-box" id="jahrGesamt">Gesamt: 0,00 €</div>
-    
     <div class="backup-group">
         <button class="btn-small" onclick="exportDaten()">Sichern</button>
         <button class="btn-small" onclick="importDaten()">Laden</button>
@@ -70,7 +67,6 @@
     let aktuellerTab = new Date().getMonth();
     let ausgaben = JSON.parse(localStorage.getItem('gastro_v_final') || '[]');
 
-    // Automatischer GPS-Start beim Laden
     window.onload = function() {
         setupTabs();
         vorschlaegeAktualisieren();
@@ -88,30 +84,29 @@
         }
 
         navigator.geolocation.getCurrentPosition(async (position) => {
-            const lat = position.coords.latitude;
-            const lon = position.coords.longitude;
-
             try {
-                const response = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}&addressdetails=1`);
+                const response = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${position.coords.latitude}&lon=${position.coords.longitude}&addressdetails=1`);
                 const data = await response.json();
                 
-                const name = data.address.amenity || data.address.restaurant || data.address.cafe || data.address.pub || data.address.tourism;
-                const city = data.address.city || data.address.village || data.address.town || "";
+                // Wir erzwingen Wolfsegg, wenn es in der Adresse vorkommt
+                const a = data.address;
+                const gemeinde = a.village || a.town || a.city || a.municipality || "";
+                const name = a.amenity || a.restaurant || a.cafe || a.pub || a.tourism || "";
                 
+                // Anzeige-Logik optimiert für Wolfsegg
+                let ortsanzeige = "";
                 if (name) {
-                    ortInput.value = `${name}, ${city}`;
-                    status.innerText = "📍 Standort erkannt";
+                    ortsanzeige = name + ", Wolfsegg";
                 } else {
-                    const road = data.address.road || "";
-                    ortInput.value = road ? `${road}, ${city}` : city;
-                    status.innerText = "📍 Adresse erkannt";
+                    ortsanzeige = gemeinde.includes("Wolfsegg") ? "Wolfsegg am Hausruck" : gemeinde;
                 }
+                
+                ortInput.value = ortsanzeige;
+                status.innerText = "📍 Standort: " + (a.road || "Erkannt");
             } catch (error) {
-                status.innerText = "❌ Fehler bei Namenssuche";
+                status.innerText = "❌ Fehler bei Abfrage";
             }
-        }, () => {
-            status.innerText = "⚠️ GPS Zugriff verweigert";
-        }, { timeout: 10000 });
+        }, () => { status.innerText = "⚠️ GPS Zugriff verweigert"; });
     }
 
     function setupTabs() {
@@ -137,7 +132,7 @@
         const oInput = document.getElementById('ort');
         let rawValue = bInput.value.replace(',', '.');
         const wert = parseFloat(rawValue);
-        if(isNaN(wert) || wert <= 0) { alert("Betrag fehlt!"); return; }
+        if(isNaN(wert) || wert <= 0) return;
 
         ausgaben.push({
             id: Date.now(),
@@ -148,8 +143,6 @@
         });
         localStorage.setItem('gastro_v_final', JSON.stringify(ausgaben));
         bInput.value = ''; 
-        // Wir lassen den Ort drin, falls man mehrere Sachen hintereinander eingibt
-        vorschlaegeAktualisieren();
         anzeigen();
     }
 
