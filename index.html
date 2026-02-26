@@ -3,12 +3,18 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <meta name="mobile-web-app-capable" content="yes">
+    
     <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#1a2a6c">
+    
     <link rel="apple-touch-icon" href="https://emojicdn.elk.sh/🍴">
     <link rel="icon" href="https://emojicdn.elk.sh/🍴">
-    <title>Gastro-Tracker Wolfsegg</title>
+
+    <link rel="manifest" href='data:application/manifest+json,{"name":"GastroTracker","short_name":"Gastro","start_url":"index.html","display":"standalone","background_color":"#1a2a6c","theme_color":"#1a2a6c","icons":[{"src":"https://emojicdn.elk.sh/🍴","sizes":"192x192","type":"image/png"}]}'>
+
+    <title>Gastro-Tracker</title>
     <style>
         :root { --primary: #ff6b6b; --secondary: #4ecdc4; }
         body { 
@@ -17,21 +23,19 @@
             background-attachment: fixed; color: white; min-height: 100vh;
         }
         .container { background: rgba(0,0,0,0.5); backdrop-filter: blur(15px); padding: 20px; border-radius: 25px; border: 1px solid rgba(255,255,255,0.1); box-shadow: 0 15px 35px rgba(0,0,0,0.5); margin-bottom: 20px; }
-        h2, h3 { text-align: center; margin-top: 0; text-transform: uppercase; letter-spacing: 1px; }
-        .tabs { display: flex; overflow-x: auto; gap: 8px; margin-bottom: 15px; padding-bottom: 10px; scrollbar-width: none; }
-        .tab { background: rgba(255,255,255,0.1); padding: 10px 15px; border-radius: 12px; cursor: pointer; white-space: nowrap; font-size: 0.9em; }
+        h2 { text-align: center; margin-top: 0; text-transform: uppercase; letter-spacing: 1px; }
+        .tabs { display: flex; overflow-x: auto; gap: 8px; margin-bottom: 15px; padding-bottom: 10px; }
+        .tab { background: rgba(255,255,255,0.1); padding: 10px 15px; border-radius: 12px; cursor: pointer; white-space: nowrap; }
         .tab.active { background: var(--primary); font-weight: bold; }
         .input-group { display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px; }
-        input { padding: 15px; border-radius: 12px; border: none; font-size: 16px; background: white; color: #333; outline: none; }
+        input { padding: 15px; border-radius: 12px; border: none; font-size: 16px; background: white; color: #333; }
         button#addBtn { padding: 15px; border-radius: 12px; border: none; background: var(--secondary); color: white; font-weight: bold; cursor: pointer; font-size: 1.1em; }
-        .gps-status { font-size: 0.75em; text-align: center; color: rgba(255,255,255,0.7); margin-top: -5px; }
         .liste { max-height: 250px; overflow-y: auto; margin-bottom: 10px; }
         .eintrag { background: rgba(255,255,255,0.1); padding: 12px; border-radius: 15px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; border-left: 5px solid var(--secondary); }
         .gesamt-box { text-align: center; font-size: 1.6em; font-weight: bold; background: rgba(255,255,255,0.15); padding: 15px; border-radius: 20px; border: 1px solid var(--primary); }
         .jahr-liste { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 15px; }
         .jahr-item { background: rgba(255,255,255,0.05); padding: 8px; border-radius: 10px; display: flex; justify-content: space-between; font-size: 0.85em; }
-        .jahr-total-box { margin-top: 15px; padding: 15px; background: var(--primary); border-radius: 15px; text-align: center; font-size: 1.3em; font-weight: bold; }
-        .del-btn { background: none; color: #ff4757; border: 1px solid #ff4757; padding: 5px 10px; border-radius: 8px; cursor: pointer; }
+        .del-btn { background: none; color: #ff4757; border: 1px solid #ff4757; padding: 5px 10px; border-radius: 8px; }
     </style>
 </head>
 <body>
@@ -41,9 +45,7 @@
     <div class="tabs" id="monthTabs"></div>
     <div class="input-group">
         <input type="text" id="betrag" placeholder="Betrag in €" inputmode="decimal">
-        <input type="text" id="ort" placeholder="Ort wird gesucht..." list="ortVorschlaege">
-        <div id="gpsStatus" class="gps-status">GPS wird geladen...</div>
-        <datalist id="ortVorschlaege"></datalist> 
+        <input type="text" id="ort" placeholder="Ort...">
         <button id="addBtn" onclick="speichern()">Hinzufügen</button>
     </div>
     <div id="liste" class="liste"></div>
@@ -53,17 +55,21 @@
 <div class="container">
     <h3>📊 Jahresübersicht</h3>
     <div id="jahrUebersicht" class="jahr-liste"></div>
-    <div class="jahr-total-box" id="jahrGesamt">0,00 €</div>
 </div>
 
 <script>
+    // Minimaler Service Worker für Offline-Start
+    if ('serviceWorker' in navigator) {
+        const sw = 'data:application/javascript,' + encodeURIComponent('self.addEventListener("fetch", (event) => { event.respondWith(fetch(event.request)); });');
+        navigator.serviceWorker.register(sw, {scope: './'});
+    }
+
     const monate = ["Jan", "Feb", "Mär", "Apr", "Mai", "Jun", "Jul", "Aug", "Sep", "Okt", "Nov", "Dez"];
     let aktuellerTab = new Date().getMonth();
     let ausgaben = JSON.parse(localStorage.getItem('gastro_v_final') || '[]');
 
     window.onload = function() {
         setupTabs();
-        vorschlaegeAktualisieren();
         anzeigen();
         standortErmitteln(); 
     };
@@ -76,14 +82,9 @@
                 const data = await res.json();
                 const a = data.address;
                 let name = a.amenity || a.restaurant || a.cafe || "";
-                let city = a.village || a.town || a.city || a.municipality || "";
-                const check = (city + (a.suburb || "") + (a.road || "")).toLowerCase();
-                if (check.includes("wolfsegg") || check.includes("kohlgrube") || check.includes("graben")) {
-                    city = "Wolfsegg am Hausruck";
-                }
-                document.getElementById('ort').value = name ? name + ", " + city : city;
-                document.getElementById('gpsStatus').innerText = "📍 Standort erkannt";
-            } catch (e) { document.getElementById('gpsStatus').innerText = "❌ GPS Fehler"; }
+                let city = a.village || a.town || a.city || "Wolfsegg";
+                document.getElementById('ort').value = name ? name : city;
+            } catch (e) {}
         });
     }
 
@@ -99,12 +100,6 @@
         });
     }
 
-    function vorschlaegeAktualisieren() {
-        const datalist = document.getElementById('ortVorschlaege');
-        const orte = [...new Set(ausgaben.map(a => a.ort))];
-        datalist.innerHTML = orte.map(o => `<option value="${o}">`).join('');
-    }
-
     function speichern() {
         const b = document.getElementById('betrag');
         const o = document.getElementById('ort');
@@ -112,13 +107,13 @@
         if(!wert) return;
         ausgaben.push({ id: Date.now(), betrag: wert, ort: o.value, monat: aktuellerTab });
         localStorage.setItem('gastro_v_final', JSON.stringify(ausgaben));
-        b.value = ''; anzeigen(); vorschlaegeAktualisieren();
+        b.value = ''; anzeigen();
     }
 
     function anzeigen() {
         const l = document.getElementById('liste');
         const j = document.getElementById('jahrUebersicht');
-        let mSum = 0, jSum = 0;
+        let mSum = 0;
         l.innerHTML = '';
         ausgaben.filter(a => a.monat === aktuellerTab).reverse().forEach(a => {
             mSum += a.betrag;
@@ -128,10 +123,8 @@
         j.innerHTML = '';
         monate.forEach((m, i) => {
             const s = ausgaben.filter(a => a.monat === i).reduce((sum, a) => sum + a.betrag, 0);
-            jSum += s;
             j.innerHTML += `<div class="jahr-item"><span>${m}</span><b>${s.toFixed(2).replace('.', ',')} €</b></div>`;
         });
-        document.getElementById('jahrGesamt').innerText = `Gesamt: ${jSum.toFixed(2).replace('.', ',')} €`;
     }
 
     function loeschen(id) {
