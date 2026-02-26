@@ -29,6 +29,9 @@ body {
   border-radius:25px;
   margin-bottom:20px;
 }
+/* Titel Zentrierung */
+h2 { text-align: center; margin-top: 0; text-transform: uppercase; letter-spacing: 1px; }
+
 .tabs { display:flex; gap:8px; overflow-x:auto; margin-bottom:15px; padding-bottom:5px; }
 .tab {
   padding:8px 12px;
@@ -38,6 +41,7 @@ body {
   white-space:nowrap;
 }
 .tab.active { background:var(--primary); font-weight:bold; }
+
 input, button {
   padding:15px;
   border-radius:12px;
@@ -48,9 +52,24 @@ input, button {
   margin-bottom:10px;
 }
 input { background:white; color:#333; outline: none; }
-button { background:var(--secondary); color:white; font-weight:bold; cursor:pointer; }
+#addBtn { background:var(--secondary); color:white; font-weight:bold; cursor:pointer; }
 
-.liste { max-height:260px; overflow-y:auto; margin-bottom: 10px; }
+/* Buttons für Export/Import */
+.io-row { display: flex; gap: 10px; margin-bottom: 15px; }
+.io-btn { 
+  background: rgba(255,255,255,0.2); 
+  padding: 12px; 
+  font-size: 14px; 
+  margin-bottom: 0;
+  cursor: pointer;
+  border-radius: 12px;
+  flex: 1;
+  border: none;
+  color: white;
+  font-weight: bold;
+}
+
+.liste { max-height:240px; overflow-y:auto; margin-top: 10px; }
 .eintrag {
   background:rgba(255,255,255,.12);
   padding:12px;
@@ -73,27 +92,22 @@ button { background:var(--secondary); color:white; font-weight:bold; cursor:poin
   border: 1px solid var(--primary);
 }
 
+/* FIX FÜR DIE JAHRESÜBERSICHT */
 .jahr-liste {
   display:grid;
   grid-template-columns:1fr 1fr;
   gap:8px;
 }
-
-/* FIX FÜR DEN ABSTAND ZWISCHEN MONAT UND SUMME */
 .jahr-item {
   background:rgba(255,255,255,.1);
   padding:10px 12px;
   border-radius:12px;
   display:flex;
-  justify-content: space-between; /* Schiebt Monat nach links, Summe nach rechts */
+  justify-content: space-between; /* Erzwingt den Abstand */
   align-items: center;
-  font-size: 0.9em;
 }
-
-.jahr-item b {
-  color: #fff;
-  letter-spacing: 0.5px;
-}
+.jahr-item span { flex: 1; } /* Nimmt Platz links ein */
+.jahr-item b { text-align: right; } /* Betrag klebt rechts */
 
 .jahr-gesamt {
   grid-column:1/3;
@@ -103,29 +117,36 @@ button { background:var(--secondary); color:white; font-weight:bold; cursor:poin
   text-align:center;
   font-weight:bold;
   margin-top:10px;
-  font-size: 1.1em;
 }
 
+.file-input { display: none; }
 .footer { text-align:center; opacity:.5; margin-top:20px; font-size: 0.8em; }
-.del-btn { width:auto; padding:5px 12px; margin:0; background:#ff4757; font-size: 0.9em; }
+.del-btn { width:auto; padding:5px 12px; margin:0; background:#ff4757; color: white; border-radius: 8px; border: none; cursor: pointer; }
 </style>
 </head>
 
 <body>
 
 <div class="container">
-<h2>🍴 Gastro-Tracker</h2>
-<div class="tabs" id="monthTabs"></div>
-<input id="betrag" placeholder="Betrag €" inputmode="decimal">
-<input id="ort" placeholder="Ort wird ermittelt …">
-<button onclick="speichern()">Hinzufügen</button>
-<div id="liste" class="liste"></div>
-<div id="gesamt" class="gesamt-box">0,00 €</div>
+  <h2>🍴 GASTRO-TRACKER</h2>
+  <div class="tabs" id="monthTabs"></div>
+  <input id="betrag" placeholder="Betrag €" inputmode="decimal">
+  <input id="ort" placeholder="Ort wird ermittelt …">
+  <button id="addBtn" onclick="speichern()">Hinzufügen</button>
+
+  <div class="io-row">
+    <button class="io-btn" onclick="exportTXT()">📤 Export</button>
+    <button class="io-btn" onclick="document.getElementById('importFile').click()">📥 Import</button>
+    <input type="file" id="importFile" class="file-input" accept=".txt" onchange="importTXT(event)">
+  </div>
+
+  <div id="liste" class="liste"></div>
+  <div id="gesamt" class="gesamt-box">0,00 €</div>
 </div>
 
 <div class="container">
-<h3>📊 Jahresübersicht</h3>
-<div id="jahrUebersicht" class="jahr-liste"></div>
+  <h3>📊 Jahresübersicht</h3>
+  <div id="jahrUebersicht" class="jahr-liste"></div>
 </div>
 
 <div class="footer">by HauniBauni</div>
@@ -144,79 +165,58 @@ function standort(){
    const r=await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${pos.coords.latitude}&lon=${pos.coords.longitude}&addressdetails=1`);
    const data = await r.json();
    const a = data.address || {};
-   let place=a.amenity||a.restaurant||a.cafe||"";
-   let city=a.city||a.town||a.village||"Wolfsegg";
-   
-   const raw=JSON.stringify(a).toLowerCase();
-   if(raw.includes("kohlgrube") || raw.includes("graben") || raw.includes("wolfsegg")) city="Wolfsegg";
-   
-   document.getElementById('ort').value = place ? place : city;
+   let city = a.city || a.town || a.village || "Wolfsegg";
+   if(JSON.stringify(a).toLowerCase().match(/kohlgrube|graben|wolfsegg/)) city="Wolfsegg";
+   document.getElementById('ort').value = city;
   }catch{ document.getElementById('ort').value="Wolfsegg"; }
- },()=>document.getElementById('ort').value="Wolfsegg",{enableHighAccuracy:true});
+ },()=>document.getElementById('ort').value="Wolfsegg");
 }
 
 function setupTabs(){
- const mt = document.getElementById('monthTabs');
- mt.innerHTML="";
+ monthTabs.innerHTML="";
  monate.forEach((m,i)=>{
   const s=document.createElement("span");
   s.textContent=m;
   s.className="tab"+(i===aktuellerTab?" active":"");
   s.onclick=()=>{aktuellerTab=i;setupTabs();anzeigen();}
-  mt.appendChild(s);
+  monthTabs.appendChild(s);
  });
 }
 
 function speichern(){
- const bField = document.getElementById('betrag');
- const b=parseFloat(bField.value.replace(",",".")); 
+ const b=parseFloat(betrag.value.replace(",",".")); 
  if(!b) return;
  const d=new Date();
  ausgaben.push({
   id:Date.now(),
   betrag:b,
-  ort:document.getElementById('ort').value,
+  ort:ort.value,
   monat:aktuellerTab,
   zeit:d.toLocaleDateString("de-DE")+" "+d.toLocaleTimeString("de-DE",{hour:"2-digit",minute:"2-digit"})
  });
  localStorage.setItem("gastro_v_final",JSON.stringify(ausgaben));
- bField.value="";
+ betrag.value="";
  anzeigen();
 }
 
 function anzeigen(){
- const listDiv = document.getElementById('liste');
- const yearDiv = document.getElementById('jahrUebersicht');
- listDiv.innerHTML="";
- yearDiv.innerHTML="";
+ liste.innerHTML="";
+ jahrUebersicht.innerHTML="";
  let mSum=0,jSum=0;
  
  ausgaben.filter(a=>a.monat===aktuellerTab).reverse().forEach(a=>{
   mSum+=a.betrag;
-  listDiv.innerHTML+=`
-    <div class="eintrag">
-      <div>
-        <b>${a.betrag.toFixed(2).replace(".",",")} €</b><br>
-        <small>📍 ${a.ort}</small>
-        <div class="zeit">📅 ${a.zeit}</div>
-      </div>
-      <button class="del-btn" onclick="loeschen(${a.id})">X</button>
-    </div>`;
+  liste.innerHTML+=`<div class="eintrag"><div><b>${a.betrag.toFixed(2).replace(".",",")} €</b><br><small>📍 ${a.ort}</small><div class="zeit">📅 ${a.zeit}</div></div><button class="del-btn" onclick="loeschen(${a.id})">X</button></div>`;
  });
  
- document.getElementById('gesamt').textContent=`${monate[aktuellerTab]}: ${mSum.toFixed(2).replace(".",",")} €`;
+ gesamt.textContent=`${monate[aktuellerTab]}: ${mSum.toFixed(2).replace(".",",")} €`;
  
  monate.forEach((m,i)=>{
   const s=ausgaben.filter(a=>a.monat===i).reduce((x,a)=>x+a.betrag,0);
   jSum+=s;
-  yearDiv.innerHTML+=`
-    <div class="jahr-item">
-      <span>${m}</span>
-      <b>${s.toFixed(2).replace(".",",")} €</b>
-    </div>`;
+  jahrUebersicht.innerHTML+=`<div class="jahr-item"><span>${m}</span><b>${s.toFixed(2).replace(".",",")} €</b></div>`;
  });
- 
- yearDiv.innerHTML+=`<div class="jahr-gesamt">GESAMT 2026: ${jSum.toFixed(2).replace(".",",")} €</div>`;
+ jahrUebersicht.innerHTML+=`<div class="jahr-gesamt">GESAMT ${new Date().getFullYear()}: ${jSum.toFixed(2).replace(".",",")} €</div>`;
 }
 
 function loeschen(id){
@@ -225,6 +225,34 @@ function loeschen(id){
   localStorage.setItem("gastro_v_final",JSON.stringify(ausgaben));
   anzeigen();
  }
+}
+
+function exportTXT(){
+ let txt="GASTRO-BACKUP\n";
+ ausgaben.forEach(a=>txt+=`${a.zeit}|${a.betrag}|${a.ort}\n`);
+ const blob=new Blob([txt],{type:"text/plain"});
+ const a=document.createElement("a");
+ a.href=URL.createObjectURL(blob);
+ a.download="gastro_backup.txt";
+ a.click();
+}
+
+function importTXT(e){
+ const f=e.target.files[0];
+ if(!f) return;
+ const r=new FileReader();
+ r.onload=()=>{
+  const zeilen = r.result.split("\n");
+  zeilen.forEach(z=>{
+   const p=z.split("|");
+   if(p.length<3) return;
+   ausgaben.push({ id:Date.now()+Math.random(), zeit:p[0], betrag:parseFloat(p[1]), ort:p[2], monat:parseInt(p[0].split(".")[1])-1 });
+  });
+  localStorage.setItem("gastro_v_final",JSON.stringify(ausgaben));
+  anzeigen();
+  alert("Import ok!");
+ };
+ r.readAsText(f);
 }
 </script>
 </body>
