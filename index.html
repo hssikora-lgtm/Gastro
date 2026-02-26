@@ -3,41 +3,145 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    
+
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="theme-color" content="#1a2a6c">
-    
+
     <link rel="apple-touch-icon" href="https://emojicdn.elk.sh/🍴">
     <link rel="icon" href="https://emojicdn.elk.sh/🍴">
 
     <title>Gastro-Tracker</title>
+
     <style>
-        :root { --primary: #ff6b6b; --secondary: #4ecdc4; }
-        body { 
-            font-family: 'Segoe UI', sans-serif; margin: 0; padding: 15px;
-            background: linear-gradient(160deg, #1a2a6c, #b21f1f, #fdbb2d);
-            background-attachment: fixed; color: white; min-height: 100vh;
+        :root { --primary:#ff6b6b; --secondary:#4ecdc4; }
+        body {
+            font-family:'Segoe UI',sans-serif;
+            margin:0; padding:15px;
+            background:linear-gradient(160deg,#1a2a6c,#b21f1f,#fdbb2d);
+            background-attachment:fixed;
+            color:white; min-height:100vh;
         }
-        .container { background: rgba(0,0,0,0.5); backdrop-filter: blur(15px); padding: 20px; border-radius: 25px; border: 1px solid rgba(255,255,255,0.1); box-shadow: 0 15px 35px rgba(0,0,0,0.5); margin-bottom: 20px; }
-        h2, h3 { text-align: center; margin-top: 0; text-transform: uppercase; letter-spacing: 1px; }
-        .tabs { display: flex; overflow-x: auto; gap: 8px; margin-bottom: 15px; padding-bottom: 5px; scrollbar-width: none; }
-        .tab { background: rgba(255,255,255,0.1); padding: 8px 12px; border-radius: 10px; cursor: pointer; white-space: nowrap; font-size: 0.9em; }
-        .tab.active { background: var(--primary); font-weight: bold; }
-        .input-group { display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px; }
-        input { padding: 15px; border-radius: 12px; border: none; font-size: 16px; background: white; color: #333; outline: none; }
-        button#addBtn { padding: 15px; border-radius: 12px; border: none; background: var(--secondary); color: white; font-weight: bold; cursor: pointer; font-size: 1.1em; }
-        .liste { max-height: 250px; overflow-y: auto; margin-bottom: 10px; }
-        .eintrag { background: rgba(255,255,255,0.1); padding: 12px; border-radius: 15px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; border-left: 5px solid var(--secondary); }
-        .info-text { font-size: 0.85em; line-height: 1.4; }
-        .zeit-stempel { font-size: 0.75em; opacity: 0.8; display: block; margin-top: 3px; color: #eee; }
-        .gesamt-box { text-align: center; font-size: 1.6em; font-weight: bold; background: rgba(255,255,255,0.15); padding: 15px; border-radius: 20px; border: 1px solid var(--primary); }
-        .jahr-liste { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px; }
-        .jahr-item { background: rgba(255,255,255,0.05); padding: 8px; border-radius: 10px; display: flex; justify-content: space-between; font-size: 0.85em; }
-        .jahr-gesamt { grid-column: 1 / span 2; background: var(--primary); margin-top: 10px; padding: 12px; border-radius: 15px; text-align: center; font-weight: bold; font-size: 1.1em; }
-        .footer { text-align: center; margin-top: 20px; font-size: 0.8em; opacity: 0.5; }
-        .del-btn { background: none; color: #ff4757; border: 1px solid #ff4757; padding: 5px 10px; border-radius: 8px; cursor: pointer; font-weight: bold; }
+        .container {
+            background:rgba(0,0,0,.5);
+            backdrop-filter:blur(15px);
+            padding:20px;
+            border-radius:25px;
+            border:1px solid rgba(255,255,255,.1);
+            box-shadow:0 15px 35px rgba(0,0,0,.5);
+            margin-bottom:20px;
+        }
+        h2,h3 {
+            text-align:center;
+            margin-top:0;
+            text-transform:uppercase;
+            letter-spacing:1px;
+        }
+        .tabs {
+            display:flex;
+            gap:8px;
+            overflow-x:auto;
+            margin-bottom:15px;
+        }
+        .tab {
+            background:rgba(255,255,255,.1);
+            padding:8px 12px;
+            border-radius:10px;
+            cursor:pointer;
+            white-space:nowrap;
+            font-size:.9em;
+        }
+        .tab.active { background:var(--primary); font-weight:bold; }
+        .input-group {
+            display:flex;
+            flex-direction:column;
+            gap:10px;
+            margin-bottom:20px;
+        }
+        input {
+            padding:15px;
+            border-radius:12px;
+            border:none;
+            font-size:16px;
+            outline:none;
+        }
+        button {
+            padding:15px;
+            border-radius:12px;
+            border:none;
+            background:var(--secondary);
+            color:white;
+            font-weight:bold;
+            font-size:1.1em;
+            cursor:pointer;
+        }
+        .liste {
+            max-height:260px;
+            overflow-y:auto;
+        }
+        .eintrag {
+            background:rgba(255,255,255,.1);
+            padding:12px;
+            border-radius:15px;
+            margin-bottom:8px;
+            display:flex;
+            justify-content:space-between;
+            align-items:center;
+            border-left:5px solid var(--secondary);
+        }
+        .info-text { font-size:.85em; }
+        .zeit-stempel {
+            font-size:.75em;
+            opacity:.8;
+            display:block;
+            margin-top:3px;
+        }
+        .del-btn {
+            background:none;
+            color:#ff4757;
+            border:1px solid #ff4757;
+            padding:5px 10px;
+            border-radius:8px;
+            font-weight:bold;
+            cursor:pointer;
+        }
+        .gesamt-box {
+            text-align:center;
+            font-size:1.6em;
+            font-weight:bold;
+            background:rgba(255,255,255,.15);
+            padding:15px;
+            border-radius:20px;
+            border:1px solid var(--primary);
+        }
+        .jahr-liste {
+            display:grid;
+            grid-template-columns:1fr 1fr;
+            gap:8px;
+            margin-top:10px;
+        }
+        .jahr-item {
+            background:rgba(255,255,255,.05);
+            padding:8px;
+            border-radius:10px;
+            display:flex;
+            justify-content:space-between;
+            font-size:.85em;
+        }
+        .jahr-gesamt {
+            grid-column:1 / span 2;
+            background:var(--primary);
+            padding:12px;
+            border-radius:15px;
+            text-align:center;
+            font-weight:bold;
+        }
+        .footer {
+            text-align:center;
+            font-size:.8em;
+            opacity:.5;
+        }
     </style>
 </head>
 <body>
@@ -45,13 +149,15 @@
 <div class="container">
     <h2>🍴 Gastro-Tracker</h2>
     <div class="tabs" id="monthTabs"></div>
+
     <div class="input-group">
-        <input type="text" id="betrag" placeholder="Betrag in €" inputmode="decimal">
-        <input type="text" id="ort" placeholder="Ort wird gesucht...">
-        <button id="addBtn" onclick="speichern()">Hinzufügen</button>
+        <input id="betrag" placeholder="Betrag in €" inputmode="decimal">
+        <input id="ort" placeholder="Ort wird gesucht…">
+        <button onclick="speichern()">Hinzufügen</button>
     </div>
+
     <div id="liste" class="liste"></div>
-    <div class="gesamt-box" id="gesamt">0,00 €</div>
+    <div id="gesamt" class="gesamt-box">0,00 €</div>
 </div>
 
 <div class="container">
@@ -62,116 +168,107 @@
 <div class="footer">by HauniBauni</div>
 
 <script>
-    const monate = ["Jan", "Feb", "Mär", "Apr", "Mai", "Jun", "Jul", "Aug", "Sep", "Okt", "Nov", "Dez"];
-    let aktuellerTab = new Date().getMonth();
-    let ausgaben = JSON.parse(localStorage.getItem('gastro_v_final') || '[]');
+const monate=["Jan","Feb","Mär","Apr","Mai","Jun","Jul","Aug","Sep","Okt","Nov","Dez"];
+let aktuellerTab=new Date().getMonth();
+let ausgaben=JSON.parse(localStorage.getItem("gastro_v_final")||"[]");
 
-    window.onload = () => {
-        setupTabs();
+window.onload=()=>{
+    setupTabs();
+    anzeigen();
+    standortErmitteln();
+};
+
+async function standortErmitteln(){
+    if(!navigator.geolocation) return;
+
+    navigator.geolocation.getCurrentPosition(async pos=>{
+        try{
+            const res=await fetch(
+                `https://nominatim.openstreetmap.org/reverse?format=json&lat=${pos.coords.latitude}&lon=${pos.coords.longitude}&addressdetails=1`
+            );
+            const d=await res.json();
+            const a=d.address||{};
+
+            const name=a.amenity||a.restaurant||a.cafe||a.pub||"";
+            const city=a.city||a.town||a.village||a.hamlet||"";
+
+            const istWolfsegg=JSON.stringify(a).toLowerCase().includes("wolfsegg");
+
+            let ort="";
+            if(name && city) ort=`${name}, ${istWolfsegg?"Wolfsegg":city}`;
+            else if(city) ort=istWolfsegg?"Wolfsegg":city;
+
+            document.getElementById("ort").value=ort;
+        }catch{}
+    });
+}
+
+function setupTabs(){
+    const c=document.getElementById("monthTabs");
+    c.innerHTML="";
+    monate.forEach((m,i)=>{
+        const s=document.createElement("span");
+        s.className="tab"+(i===aktuellerTab?" active":"");
+        s.innerText=m;
+        s.onclick=()=>{aktuellerTab=i;setupTabs();anzeigen();};
+        c.appendChild(s);
+    });
+}
+
+function speichern(){
+    const b=document.getElementById("betrag");
+    const o=document.getElementById("ort");
+    const w=parseFloat(b.value.replace(",","."));
+    if(!w) return;
+
+    const now=new Date();
+    const zeit=now.toLocaleDateString("de-DE")+" "+now.toLocaleTimeString("de-DE",{hour:"2-digit",minute:"2-digit"});
+
+    ausgaben.push({id:Date.now(),betrag:w,ort:o.value,monat:aktuellerTab,zeit});
+    localStorage.setItem("gastro_v_final",JSON.stringify(ausgaben));
+    b.value="";
+    anzeigen();
+}
+
+function anzeigen(){
+    const l=document.getElementById("liste");
+    const j=document.getElementById("jahrUebersicht");
+    let mSum=0,jSum=0;
+    l.innerHTML="";
+
+    ausgaben.filter(a=>a.monat===aktuellerTab).reverse().forEach(a=>{
+        mSum+=a.betrag;
+        l.innerHTML+=`
+        <div class="eintrag">
+            <div class="info-text">
+                <b>${a.betrag.toFixed(2).replace(".",",")} €</b><br>
+                📍 ${a.ort}
+                <span class="zeit-stempel">📅 ${a.zeit}</span>
+            </div>
+            <button class="del-btn" onclick="loeschen(${a.id})">X</button>
+        </div>`;
+    });
+
+    document.getElementById("gesamt").innerText=
+        `${monate[aktuellerTab]}: ${mSum.toFixed(2).replace(".",",")} €`;
+
+    j.innerHTML="";
+    monate.forEach((m,i)=>{
+        const s=ausgaben.filter(a=>a.monat===i).reduce((x,a)=>x+a.betrag,0);
+        jSum+=s;
+        j.innerHTML+=`<div class="jahr-item"><span>${m}</span><b>${s.toFixed(2).replace(".",",")} €</b></div>`;
+    });
+    j.innerHTML+=`<div class="jahr-gesamt">GESAMT ${new Date().getFullYear()}: ${jSum.toFixed(2).replace(".",",")} €</div>`;
+}
+
+function loeschen(id){
+    if(confirm("Diesen Eintrag löschen?")){
+        ausgaben=ausgaben.filter(a=>a.id!==id);
+        localStorage.setItem("gastro_v_final",JSON.stringify(ausgaben));
         anzeigen();
-        standortErmitteln(); 
-    };
-
-    async function standortErmitteln() {
-        if (!navigator.geolocation) return;
-        navigator.geolocation.getCurrentPosition(async (pos) => {
-            try {
-                const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${pos.coords.latitude}&lon=${pos.coords.longitude}&addressdetails=1`);
-                const data = await res.json();
-                const a = data.address;
-                
-                let name = a.amenity || a.restaurant || a.cafe || a.pub || "";
-                let city = a.village || a.town || a.city || a.municipality || "";
-                
-                // Aggressive Wolfsegg-Korrektur:
-                const vollAdresse = JSON.stringify(a).toLowerCase();
-                if (vollAdresse.includes("kohlgrube") || vollAdresse.includes("graben") || vollAdresse.includes("wolfsegg")) {
-                    city = "Wolfsegg";
-                }
-                
-                document.getElementById('ort').value = name ? name : (city || "Wolfsegg");
-            } catch (e) {
-                document.getElementById('ort').value = "Wolfsegg";
-            }
-        }, () => {
-            document.getElementById('ort').value = "Wolfsegg";
-        }, { enableHighAccuracy: true });
     }
-
-    function setupTabs() {
-        const c = document.getElementById('monthTabs');
-        c.innerHTML = '';
-        monate.forEach((m, i) => {
-            const s = document.createElement('span');
-            s.className = `tab ${i === aktuellerTab ? 'active' : ''}`;
-            s.innerText = m;
-            s.onclick = () => { aktuellerTab = i; setupTabs(); anzeigen(); };
-            c.appendChild(s);
-        });
-    }
-
-    function speichern() {
-        const b = document.getElementById('betrag'), o = document.getElementById('ort');
-        const w = parseFloat(b.value.replace(',', '.'));
-        if(!w) return;
-
-        const jetzt = new Date();
-        const zeitString = jetzt.toLocaleDateString('de-DE') + " " + jetzt.toLocaleTimeString('de-DE', {hour: '2-digit', minute:'2-digit'});
-
-        ausgaben.push({ 
-            id: Date.now(), 
-            betrag: w, 
-            ort: o.value, 
-            monat: aktuellerTab,
-            zeit: zeitString 
-        });
-
-        localStorage.setItem('gastro_v_final', JSON.stringify(ausgaben));
-        b.value = ''; 
-        anzeigen();
-    }
-
-    function anzeigen() {
-        const l = document.getElementById('liste'), j = document.getElementById('jahrUebersicht');
-        let mSum = 0;
-        let jSum = 0;
-        l.innerHTML = '';
-        
-        // Monatssumme und Liste
-        ausgaben.filter(a => a.monat === aktuellerTab).reverse().forEach(a => {
-            mSum += a.betrag;
-            l.innerHTML += `
-                <div class="eintrag">
-                    <div class="info-text">
-                        <b>${a.betrag.toFixed(2).replace('.', ',')} €</b><br>
-                        📍 ${a.ort}
-                        <span class="zeit-stempel">📅 ${a.zeit || ''}</span>
-                    </div>
-                    <button class="del-btn" onclick="loeschen(${a.id})">X</button>
-                </div>`;
-        });
-        
-        document.getElementById('gesamt').innerText = `${monate[aktuellerTab]}: ${mSum.toFixed(2).replace('.', ',')} €`;
-        
-        // Jahresübersicht berechnen
-        j.innerHTML = '';
-        monate.forEach((m, i) => {
-            const s = ausgaben.filter(a => a.monat === i).reduce((sum, a) => sum + a.betrag, 0);
-            jSum += s;
-            j.innerHTML += `<div class="jahr-item"><span>${m}</span><b>${s.toFixed(2).replace('.', ',')} €</b></div>`;
-        });
-        
-        // Jahressumme hinzufügen
-        j.innerHTML += `<div class="jahr-gesamt">GESAMT ${new Date().getFullYear()}: ${jSum.toFixed(2).replace('.', ',')} €</div>`;
-    }
-
-    function loeschen(id) {
-        if(confirm("Diesen Eintrag löschen?")) {
-            ausgaben = ausgaben.filter(a => a.id !== id);
-            localStorage.setItem('gastro_v_final', JSON.stringify(ausgaben));
-            anzeigen();
-        }
-    }
+}
 </script>
+
 </body>
 </html>
