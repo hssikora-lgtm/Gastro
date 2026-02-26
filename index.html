@@ -1,9 +1,6 @@
 <!DOCTYPE html>
 <html lang="de">
 <head>
-  <link rel="manifest" href="./manifest.json">
-<link rel="apple-touch-icon" href="https://emojicdn.elk.sh/🍴">
-<link rel="icon" href="https://emojicdn.elk.sh/🍴">
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 
@@ -12,13 +9,14 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="theme-color" content="#1a2a6c">
 
+<link rel="manifest" href="./manifest.json">
 <link rel="apple-touch-icon" href="https://emojicdn.elk.sh/🍴">
 <link rel="icon" href="https://emojicdn.elk.sh/🍴">
 
 <title>Gastro-Tracker</title>
 
 <style>
-:root { --primary:#ff6b6b; --secondary:#4ecdc4; }
+:root { --primary:#ff6b6b; --secondary:#4ecdc4; --success: #2ecc71; }
 body {
   font-family: Segoe UI, sans-serif;
   margin:0; padding:15px;
@@ -32,7 +30,6 @@ body {
   border-radius:25px;
   margin-bottom:20px;
 }
-/* Titel Zentrierung */
 h2 { text-align: center; margin-top: 0; text-transform: uppercase; letter-spacing: 1px; }
 
 .tabs { display:flex; gap:8px; overflow-x:auto; margin-bottom:15px; padding-bottom:5px; }
@@ -57,7 +54,6 @@ input, button {
 input { background:white; color:#333; outline: none; }
 #addBtn { background:var(--secondary); color:white; font-weight:bold; cursor:pointer; }
 
-/* Buttons für Export/Import */
 .io-row { display: flex; gap: 10px; margin-bottom: 15px; }
 .io-btn { 
   background: rgba(255,255,255,0.2); 
@@ -70,6 +66,17 @@ input { background:white; color:#333; outline: none; }
   border: none;
   color: white;
   font-weight: bold;
+}
+
+/* Erfolgs-Animation */
+#msg { 
+  text-align: center; 
+  color: var(--success); 
+  font-weight: bold; 
+  height: 20px; 
+  margin-bottom: 5px; 
+  opacity: 0; 
+  transition: opacity 0.3s;
 }
 
 .liste { max-height:240px; overflow-y:auto; margin-top: 10px; }
@@ -91,11 +98,10 @@ input { background:white; color:#333; outline: none; }
   font-weight:bold;
   text-align:center;
   border-radius:20px;
-  background:rgba(255,255,255,.15);
+  background:rgba(255,255,255,0.15);
   border: 1px solid var(--primary);
 }
 
-/* FIX FÜR DIE JAHRESÜBERSICHT */
 .jahr-liste {
   display:grid;
   grid-template-columns:1fr 1fr;
@@ -106,11 +112,11 @@ input { background:white; color:#333; outline: none; }
   padding:10px 12px;
   border-radius:12px;
   display:flex;
-  justify-content: space-between; /* Erzwingt den Abstand */
+  justify-content: space-between;
   align-items: center;
 }
-.jahr-item span { flex: 1; } /* Nimmt Platz links ein */
-.jahr-item b { text-align: right; } /* Betrag klebt rechts */
+.jahr-item span { flex: 1; }
+.jahr-item b { text-align: right; }
 
 .jahr-gesamt {
   grid-column:1/3;
@@ -143,6 +149,7 @@ input { background:white; color:#333; outline: none; }
     <input type="file" id="importFile" class="file-input" accept=".txt" onchange="importTXT(event)">
   </div>
 
+  <div id="msg">Gespeichert! ✔</div>
   <div id="liste" class="liste"></div>
   <div id="gesamt" class="gesamt-box">0,00 €</div>
 </div>
@@ -199,6 +206,12 @@ function speichern(){
  });
  localStorage.setItem("gastro_v_final",JSON.stringify(ausgaben));
  betrag.value="";
+ 
+ // Erfolgsmeldung anzeigen
+ const m = document.getElementById('msg');
+ m.style.opacity = "1";
+ setTimeout(() => m.style.opacity = "0", 1500);
+ 
  anzeigen();
 }
 
@@ -219,7 +232,7 @@ function anzeigen(){
   jSum+=s;
   jahrUebersicht.innerHTML+=`<div class="jahr-item"><span>${m}</span><b>${s.toFixed(2).replace(".",",")} €</b></div>`;
  });
- jahrUebersicht.innerHTML+=`<div class="jahr-gesamt">GESAMT ${new Date().getFullYear()}: ${jSum.toFixed(2).replace(".",",")} €</div>`;
+ jahrUebersicht.innerHTML+=`<div class="jahr-gesamt">GESAMT 2026: ${jSum.toFixed(2).replace(".",",")} €</div>`;
 }
 
 function loeschen(id){
