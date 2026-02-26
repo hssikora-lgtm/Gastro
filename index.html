@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <link rel="icon" href="https://cdn-icons-png.flaticon.com/512/1046/1046747.png">
+<link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/1046/1046747.png">
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Gastro-Tracker Ultimate</title>
+    <style>
+        :root { --primary: #ff6b6b; --secondary: #4ecdc4; --dark: #2f3542; }
+        body { 
+            font-family: 'Segoe UI', sans-serif; margin: 0; padding: 15px;
+            background: linear-gradient(160deg, #1a2a6c, #b21f1f, #fdbb2d);
+            background-attachment: fixed; color: white; min-height: 100vh;
+            display: flex; flex-direction: column;
+        }
+        .container { background: rgba(0,0,0,0.5); backdrop-filter: blur(15px); padding: 20px; border-radius: 25px; border: 1px solid rgba(255,255,255,0.1); box-shadow: 0 15px 35px rgba(0,0,0,0.5); margin-bottom: 20px; }
+        h2, h3 { text-align: center; margin-top: 0; text-transform: uppercase; letter-spacing: 1px; }
+        .tabs { display: flex; overflow-x: auto; gap: 8px; margin-bottom: 15px; padding-bottom: 10px; scrollbar-width: none; }
+        .tab { background: rgba(255,255,255,0.1); padding: 10px 15px; border-radius: 12px; cursor: pointer; white-space: nowrap; font-size: 0.9em; }
+        .tab.active { background: var(--primary); font-weight: bold; }
+        .input-group { display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px; }
+        input { padding: 15px; border-radius: 12px; border: none; font-size: 16px; background: white; color: #333; outline: none; }
+        button#addBtn { padding: 15px; border-radius: 12px; border: none; background: var(--secondary); color: white; font-weight: bold; cursor: pointer; font-size: 1.1em; }
+        .liste { max-height: 250px; overflow-y: auto; margin-bottom: 10px; }
+        .eintrag { background: rgba(255,255,255,0.1); padding: 12px; border-radius: 15px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; border-left: 5px solid var(--secondary); }
+        .gesamt-box { text-align: center; font-size: 1.6em; font-weight: bold; background: rgba(255,255,255,0.15); padding: 15px; border-radius: 20px; border: 1px solid var(--primary); }
+        .jahr-liste { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 15px; }
+        .jahr-item { background: rgba(255,255,255,0.05); padding: 8px; border-radius: 10px; display: flex; justify-content: space-between; font-size: 0.85em; }
+        .jahr-total-box { margin-top: 15px; padding: 15px; background: var(--primary); border-radius: 15px; text-align: center; font-size: 1.3em; font-weight: bold; }
+        .backup-group { display: flex; gap: 10px; margin-top: 10px; }
+        .btn-small { flex: 1; padding: 10px; font-size: 0.8em; border-radius: 10px; border: 1px solid rgba(255,255,255,0.3); background: rgba(255,255,255,0.1); color: white; cursor: pointer; }
+        .del-btn { background: none; color: #ff4757; border: 1px solid #ff4757; padding: 5px 10px; border-radius: 8px; cursor: pointer; }
+        
+        /* Der HauniBauni Style */
+        .footer-branding {
+            text-align: center;
+            padding: 20px 0;
+            font-size: 0.85em;
+            letter-spacing: 2px;
+            color: rgba(255,255,255,0.6);
+            text-transform: lowercase;
+            font-style: italic;
+        }
+        .footer-branding span {
+            color: var(--secondary);
+            text-shadow: 0 0 10px var(--secondary);
+            font-weight: bold;
+            font-style: normal;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>🍴 Gastro-Tracker</h2>
+    <div class="tabs" id="monthTabs"></div>
+    <div class="input-group">
+        <input type="number" id="betrag" placeholder="Betrag in €" step="0.01" inputmode="decimal">
+        <input type="text" id="ort" placeholder="Wo?" list="ortVorschlaege">
+        <datalist id="ortVorschlaege"></datalist> 
+        <button id="addBtn" onclick="speichern()">Hinzufügen</button>
+    </div>
+    <div id="liste" class="liste"></div>
+    <div class="gesamt-box" id="gesamt">0,00 €</div>
+</div>
+
+<div class="container">
+    <h3>📊 Jahresübersicht</h3>
+    <div id="jahrUebersicht" class="jahr-liste"></div>
+    <div class="jahr-total-box" id="jahrGesamt">Gesamt: 0,00 €</div>
+    
+    <div class="backup-group">
+        <button class="btn-small" onclick="exportDaten()">Daten sichern</button>
+        <button class="btn-small" onclick="importDaten()">Daten laden</button>
+    </div>
+</div>
+
+<div class="footer-branding">
+    by <span>HauniBauni</span>
+</div>
+
+<script>
+    const monate = ["Jan", "Feb", "Mär", "Apr", "Mai", "Jun", "Jul", "Aug", "Sep", "Okt", "Nov", "Dez"];
+    let aktuellerTab = new Date().getMonth();
+    let ausgaben = JSON.parse(localStorage.getItem('gastro_v_final') || '[]');
+
+    function setupTabs() {
+        const container = document.getElementById('monthTabs');
+        container.innerHTML = '';
+        monate.forEach((m, i) => {
+            const s = document.createElement('span');
+            s.className = `tab ${i === aktuellerTab ? 'active' : ''}`;
+            s.innerText = m;
+            s.onclick = () => { aktuellerTab = i; setupTabs(); anzeigen(); };
+            container.appendChild(s);
+        });
+    }
+
+    function vorschlaegeAktualisieren() {
+        const datalist = document.getElementById('ortVorschlaege');
+        const orte = [...new Set(ausgaben.map(a => a.ort))];
+        datalist.innerHTML = orte.map(o => `<option value="${o}">`).join('');
+    }
+
+    function speichern() {
+        const bInput = document.getElementById('betrag');
+        const oInput = document.getElementById('ort');
+        const wert = parseFloat(bInput.value);
+        if(!wert) return;
+        ausgaben.push({
+            id: Date.now(),
+            betrag: wert,
+            ort: oInput.value || "Unbekannt",
+            zeit: new Date().toLocaleString('de-DE', {day: '2-digit', month: '2-digit', hour: '2-digit', minute:'2-digit'}),
+            monat: aktuellerTab
+        });
+        localStorage.setItem('gastro_v_final', JSON.stringify(ausgaben));
+        bInput.value = ''; oInput.value = '';
+        vorschlaegeAktualisieren();
+        anzeigen();
+    }
+
+    function anzeigen() {
+        const liste = document.getElementById('liste');
+        const jahrContainer = document.getElementById('jahrUebersicht');
+        let monatsSumme = 0, jahresSumme = 0;
+        liste.innerHTML = '';
+        ausgaben.filter(a => a.monat === aktuellerTab).reverse().forEach(a => {
+            monatsSumme += a.betrag;
+            liste.innerHTML += `<div class="eintrag"><div><b>${a.betrag.toFixed(2)} €</b><br><small>📍 ${a.ort} (${a.zeit})</small></div><button class="del-btn" onclick="loeschen(${a.id})">X</button></div>`;
+        });
+        document.getElementById('gesamt').innerText = `${monate[aktuellerTab]}: ${monatsSumme.toFixed(2).replace('.', ',')} €`;
+        jahrContainer.innerHTML = '';
+        monate.forEach((m, i) => {
+            const s = ausgaben.filter(a => a.monat === i).reduce((sum, a) => sum + a.betrag, 0);
+            jahresSumme += s;
+            jahrContainer.innerHTML += `<div class="jahr-item"><span>${m}</span><b>${s.toFixed(2)} €</b></div>`;
+        });
+        document.getElementById('jahrGesamt').innerText = `Gesamt ${new Date().getFullYear()}: ${jahresSumme.toFixed(2).replace('.', ',')} €`;
+    }
+
+    function exportDaten() {
+        const daten = JSON.stringify(ausgaben);
+        const el = document.createElement('textarea');
+        el.value = daten;
+        document.body.appendChild(el);
+        el.select();
+        document.execCommand('copy');
+        document.body.removeChild(el);
+        alert("Deine Daten wurden in die Zwischenablage kopiert!");
+    }
+
+    function importDaten() {
+        const backup = prompt("Füge hier deine gesicherten Daten ein:");
+        if (backup) {
+            try {
+                ausgaben = JSON.parse(backup);
+                localStorage.setItem('gastro_v_final', JSON.stringify(ausgaben));
+                anzeigen();
+                vorschlaegeAktualisieren();
+                alert("Daten erfolgreich importiert!");
+            } catch(e) { alert("Fehler: Ungültige Daten."); }
+        }
+    }
+
+    function loeschen(id) {
+        if(confirm("Löschen?")) {
+            ausgaben = ausgaben.filter(a => a.id !== id);
+            localStorage.setItem('gastro_v_final', JSON.stringify(ausgaben));
+            anzeigen();
+            vorschlaegeAktualisieren();
+        }
+    }
+
+    setupTabs();
+    vorschlaegeAktualisieren();
+    anzeigen();
+</script>
+</body>
+</html>
