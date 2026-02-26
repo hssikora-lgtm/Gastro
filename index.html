@@ -6,15 +6,15 @@
     
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="display" content="standalone">
     <meta name="theme-color" content="#1a2a6c">
     
     <link rel="apple-touch-icon" href="https://emojicdn.elk.sh/🍴">
-    <link rel="icon" href="https://emojicdn.elk.sh/🍴">
+    <link rel="icon" type="image/png" href="https://emojicdn.elk.sh/🍴">
 
-    <link rel="manifest" href='data:application/manifest+json,{"name":"GastroTracker","short_name":"Gastro","start_url":"index.html","display":"standalone","background_color":"#1a2a6c","theme_color":"#1a2a6c","icons":[{"src":"https://emojicdn.elk.sh/🍴","sizes":"192x192","type":"image/png","purpose":"any maskable"}]}'>
+    <link rel="manifest" href='data:application/manifest+json,{"name":"GastroTracker","short_name":"Gastro","start_url":"index.html","display":"standalone","background_color":"#1a2a6c","theme_color":"#1a2a6c","icons":[{"src":"https://emojicdn.elk.sh/🍴","sizes":"192x192","type":"image/png"}]}'>
 
-    <title>Gastro-Tracker v2.1</title>
+    <title>Gastro-Tracker v2.2</title>
     <style>
         :root { --primary: #ff6b6b; --secondary: #4ecdc4; }
         body { 
@@ -25,7 +25,7 @@
         .container { background: rgba(0,0,0,0.5); backdrop-filter: blur(15px); padding: 20px; border-radius: 25px; border: 1px solid rgba(255,255,255,0.1); box-shadow: 0 15px 35px rgba(0,0,0,0.5); margin-bottom: 20px; }
         h2 { text-align: center; margin: 0; text-transform: uppercase; letter-spacing: 1px; font-size: 1.4em; }
         .version { text-align: center; font-size: 0.6em; opacity: 0.5; margin-bottom: 15px; }
-        .tabs { display: flex; overflow-x: auto; gap: 8px; margin-bottom: 15px; padding-bottom: 5px; scrollbar-width: none; }
+        .tabs { display: flex; overflow-x: auto; gap: 8px; margin-bottom: 15px; padding-bottom: 5px; -webkit-overflow-scrolling: touch; }
         .tab { background: rgba(255,255,255,0.1); padding: 8px 12px; border-radius: 10px; cursor: pointer; white-space: nowrap; font-size: 0.9em; }
         .tab.active { background: var(--primary); font-weight: bold; }
         .input-group { display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px; }
@@ -37,18 +37,18 @@
         .jahr-liste { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-top: 10px; }
         .jahr-item { background: rgba(255,255,255,0.05); padding: 6px; border-radius: 8px; display: flex; justify-content: space-between; font-size: 0.8em; }
         .footer { text-align: center; margin-top: 20px; font-size: 0.8em; opacity: 0.6; }
-        .del-btn { background: none; color: #ff4757; border: 1px solid #ff4757; padding: 4px 8px; border-radius: 6px; font-size: 0.8em; }
+        .del-btn { background: none; color: #ff4757; border: 1px solid #ff4757; padding: 4px 8px; border-radius: 6px; }
     </style>
 </head>
 <body>
 
 <div class="container">
     <h2>🍴 GASTRO-TRACKER</h2>
-    <div class="version">v2.1 - FULL APP MODE</div>
+    <div class="version">v2.2 - FINAL REPAIR</div>
     <div class="tabs" id="monthTabs"></div>
     <div class="input-group">
         <input type="text" id="betrag" placeholder="Betrag in €" inputmode="decimal">
-        <input type="text" id="ort" placeholder="Ort wird gesucht...">
+        <input type="text" id="ort" placeholder="Ort...">
         <button id="addBtn" onclick="speichern()">Hinzufügen</button>
     </div>
     <div id="liste" class="liste"></div>
@@ -63,7 +63,7 @@
 <div class="footer">by HauniBauni</div>
 
 <script>
-    // Registriere Service Worker für PWA-Erkennung
+    // Notwendig für "App installieren" in Chrome
     if ('serviceWorker' in navigator) {
         navigator.serviceWorker.register('data:application/javascript,' + encodeURIComponent('self.addEventListener("fetch", (e) => { e.respondWith(fetch(e.request)); });'));
     }
@@ -81,7 +81,7 @@
                 const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${pos.coords.latitude}&lon=${pos.coords.longitude}&addressdetails=1`);
                 const data = await res.json();
                 const a = data.address;
-                let name = a.amenity || a.restaurant || a.cafe || a.pub || "";
+                let name = a.amenity || a.restaurant || a.cafe || "";
                 let city = a.village || a.town || a.city || "Wolfsegg";
                 if ((city + (a.suburb || "") + (a.road || "")).toLowerCase().match(/wolfsegg|kohlgrube|graben/)) city = "Wolfsegg";
                 document.getElementById('ort').value = name ? name : city;
