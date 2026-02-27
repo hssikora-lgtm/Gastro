@@ -30,7 +30,6 @@ body {
   border-radius:25px;
   margin-bottom:20px;
 }
-/* Beider Titel Zentrierung */
 h2, h3 { text-align: center; display: flex; justify-content: center; align-items: center; gap: 10px; text-transform: uppercase; letter-spacing: 1px; margin-top: 0; }
 
 .tabs { display:flex; gap:8px; overflow-x:auto; margin-bottom:15px; padding-bottom:5px; }
@@ -167,11 +166,23 @@ function standort(){
    const r=await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${pos.coords.latitude}&lon=${pos.coords.longitude}&addressdetails=1`);
    const data = await r.json();
    const a = data.address || {};
-   let city = a.city || a.town || a.village || "Wolfsegg";
-   if(JSON.stringify(a).toLowerCase().match(/kohlgrube|graben|wolfsegg/)) city="Wolfsegg";
-   document.getElementById('ort').value = city;
+   
+   // Namen des Lokals suchen
+   let place = a.amenity || a.restaurant || a.cafe || a.gastropub || a.bar || a.tourism || "";
+   
+   // Stadt/Gemeinde sauber ermitteln (bevorzugt die echte Stadt vor dem Ortsteil)
+   let city = a.city || a.town || a.village || a.municipality || "Wolfsegg";
+   
+   // Spezial-Korrektur für Schallerbach & Wolfsegg (Ortsteile ignorieren)
+   const raw = JSON.stringify(a).toLowerCase();
+   if(raw.includes("schallerbach")) city = "Bad Schallerbach";
+   if(raw.includes("wolfsegg") || raw.includes("kohlgrube") || raw.includes("graben")) city = "Wolfsegg";
+
+   // Ergebnis zusammenbauen
+   document.getElementById('ort').value = place ? `${place}, ${city}` : city;
+   
   }catch{ document.getElementById('ort').value="Wolfsegg"; }
- },()=>document.getElementById('ort').value="Wolfsegg");
+ },()=>document.getElementById('ort').value="Wolfsegg",{enableHighAccuracy:true, timeout: 5000});
 }
 
 function setupTabs(){
