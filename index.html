@@ -167,22 +167,30 @@ function standort(){
    const data = await r.json();
    const a = data.address || {};
    
-   // Namen des Lokals suchen
-   let place = a.amenity || a.restaurant || a.cafe || a.gastropub || a.bar || a.tourism || "";
+   // MAXIMALER SCAN NACH LOKAL-NAMEN
+   // Wir prüfen alles: Restaurant, Pizzeria, Café, Bar, Hotel, Shop, etc.
+   let place = a.amenity || a.restaurant || a.cafe || a.gastropub || a.pizzeria || a.fast_food || a.bar || a.pub || a.tourism || a.hotel || a.shop || a.building || a.house_name || "";
    
-   // Stadt/Gemeinde sauber ermitteln (bevorzugt die echte Stadt vor dem Ortsteil)
-   let city = a.city || a.town || a.village || a.municipality || "Wolfsegg";
+   // GEMEINDE-ERMITTLUNG
+   let city = a.city || a.town || a.village || a.municipality || a.suburb || "Wolfsegg";
    
-   // Spezial-Korrektur für Schallerbach & Wolfsegg (Ortsteile ignorieren)
    const raw = JSON.stringify(a).toLowerCase();
+   
+   // BEKANNTE KORREKTUREN
+   if(raw.includes("vöcklabruck")) city = "Vöcklabruck";
    if(raw.includes("schallerbach")) city = "Bad Schallerbach";
    if(raw.includes("wolfsegg") || raw.includes("kohlgrube") || raw.includes("graben")) city = "Wolfsegg";
 
-   // Ergebnis zusammenbauen
-   document.getElementById('ort').value = place ? `${place}, ${city}` : city;
+   // Letzter Versuch: Falls kein Name da ist, schauen wir, ob ein Name in den "display_name" gerutscht ist
+   if(!place && data.display_name) {
+      const parts = data.display_name.split(",");
+      if(parts.length > 0 && isNaN(parts[0])) place = parts[0]; 
+   }
+
+   document.getElementById('ort').value = (place && place !== city) ? `${place}, ${city}` : city;
    
   }catch{ document.getElementById('ort').value="Wolfsegg"; }
- },()=>document.getElementById('ort').value="Wolfsegg",{enableHighAccuracy:true, timeout: 5000});
+ },()=>document.getElementById('ort').value="Wolfsegg",{enableHighAccuracy:true, timeout: 8000});
 }
 
 function setupTabs(){
